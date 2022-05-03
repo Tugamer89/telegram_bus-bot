@@ -1,0 +1,17 @@
+{
+  "name": "bottino",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "json2csv": "^5.0.7",
+    "line-reader": "^0.4.0",
+    "node-telegram-bot-api": "^0.57.0"
+  }
+}
