@@ -3,10 +3,11 @@ const fs = require('fs')
 const path = require('path');
 const json2csv = require('json2csv').parse;
 const lineReader = require('line-reader');
-const token = process.env['token']
+const token = process.env.TOKEN
 const bot = new TelegramBot(token, { polling: true })
 
 let users = []
+let clock = []
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 const months = ["January" ,"February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -19,8 +20,11 @@ function fileName(userId) {
 
 function loadDB() {
   users = []
+	clock = []
   lineReader.eachLine('registered_users.data', function(line) {
-    users.push(Number(line))
+		line = line.split('-')
+    users.push(Number(line[0]))
+		clock.push(line[1])
   })
   console.log('Database loaded!')
 }
@@ -30,11 +34,12 @@ function saveDB() {
     if (err) console.log(err)
   })
 
-  users.forEach(function(user) { //to write actually the file
-    fs.appendFile('registered_users.data', `${user}\n`, function(err) {
-      if (err) console.log(err)
-    })
-  })
+	for (let i = 0; i < users.length; i++) {	//to actually write the file
+		fs.appendFile('registered_users.data', `${users[i]}-${clock[i]}\n`, function(err) {
+			if (err) console.log(err)
+		})
+	}
+
   console.log('Database saved!')
 }
 
@@ -64,31 +69,56 @@ bot.onText(/\/help/, (msg) => {
 	bot.sendMessage(chatId, `This is the help command!
 
 
-/help          this message
+-> /help          this message
 
-/register [hh:mm]          register to the newsletter - default 23:00 CET
+-> /register [hh:mm]          register to the newsletter - default 23:00 CET
 
-/unregister          unregister to the newsletter
+-> /unregister          unregister to the newsletter
 
-/add [weekday] [day] [month] [year] [hh:mm] [code] [number]          manually add a bus - weekday in letters, day in numbers, year in numbers, code 4 digits, number 1-999
+-> /add [weekday] [day] [month] [year] [hh:mm] [code] [number]          manually add a bus - weekday in letters, day in numbers, year in numbers, code 4 digits, number 1-999
 
-[code] [number]          automatically add a bus - code 4 digits, number 1-999
+-> [code] [number]          automatically add a bus - code 4 digits, number 1-999
 
-Send me the CSV          send the database in the CSV format`)
+-> Send me the CSV          send the database in the CSV format`)
 })
 
 
-bot.onText(/\/register/, (msg) => {
+bot.onText(/\/register/, (msg, match) => {
   const chatId = msg.chat.id
 	
   if (users.includes(chatId)) {
     bot.sendMessage(chatId, 'You cannot register twice or more!')
   } else {
-		users.push(chatId)
-		console.log(`User ${chatId} registered`)
-		bot.sendMessage(chatId, 'You have been registred!')
+		let time = match['input'].split(' ')[1]
+		
+		if (typeof time === 'undefined') {
+			time = `23:00`
+		}
+		
+		if (!/^(2[0-3]|[0-1]?[0-9]):([0-5]?[0-9])$/.test(time)) {
+			bot.sendMessage(chatId, `The time ${time} is not valid`)
+		}
+		else {
+			let times = time.split(':')
+			let hours = times[0]
+			let minutes = times[1]
+	
+			if (/^[0-9]$/.test(hours)) {
+				hours = `0${hours}`
+			}
+			if (/^[0-9]$/.test(minutes)) {
+				minutes = `0${minutes}`
+			}
+	
+			time = `${hours}:${minutes}`
+			
+			users.push(chatId)
+			clock.push(time)
+			console.log(`User ${chatId} registered with ${time}`)
+			bot.sendMessage(chatId, `You have been registred for the ${time} newsletter!`)
+			saveDB()
+		}
   }
-  saveDB()
 })
 
 
@@ -98,15 +128,16 @@ bot.onText(/\/unregister/, (msg) => {
     for (var i = 0; i < users.length; i++) {
       if (users[i] === chatId) {
         users.splice(i, 1)
+				clock.splice(i, 1)
         break
       }
     }
     console.log(`User ${chatId} unregistered`)
     bot.sendMessage(chatId, 'You have been unregistred!')
+		saveDB()
   } else {
     bot.sendMessage(chatId, 'You cannot unregister if you are not registered yet!')
   }
-  saveDB()
 })
 
 
@@ -194,7 +225,7 @@ bot.onText(/^[0-9]{4}\ [1-9][0-9]{0,2}$/, (msg, match) => {		//4 numbers and a s
   let ts = Date.now()
   let date_ob = new Date(ts)
   let minutes = date_ob.getMinutes()
-  let hours = date_ob.getHours()+2	//+2 fro CET
+  let hours = date_ob.getHours()+2	//+2 for CET
   let weekday = weekdays[date_ob.getDay()]
   let day = date_ob.getDate()
   let month = months[date_ob.getMonth()]
@@ -231,28 +262,29 @@ bot.onText(/^[0-9]{4}\ [1-9][0-9]{0,2}$/, (msg, match) => {		//4 numbers and a s
 setInterval(function () {
   let ts = Date.now()
   let date_ob = new Date(ts)
-  let hours = date_ob.getHours()
+  let hours = date_ob.getHours()+2	//+2 for CET
   let minutes = date_ob.getMinutes()
 
-  if (hours == '21' && minutes == '00') {	//UTC hour
-    if (users.length > 0) {
-      for (let i = 0; i < users.length; i++) {
-        bot.sendMessage(users[i], "That's the CSV:")
-        bot.sendDocument(users[i], `./CSV/${fileName(users[i])}`)
-        console.log(`File CSV sent to ${String(users[i])}`)
-      }
-    } else {
-      console.log('No users registered')
-    }
-  }
-}, 1000 * 60 * 1)  //Check every one minute
+	for (let j = 0; j < clock.length; j++) {
+		let time = clock[j].split(':')
+		let prv_hours = time[0]
+		let prv_minutes = time[1]
+
+		if (hours == prv_hours && minutes == prv_minutes) {
+			bot.sendMessage(users[j], "That's your CSV:")
+			bot.sendDocument(users[j], `./CSV/${fileName(users[j])}`)
+			console.log(`Newsletter sent to ${users[j]}`)
+		}
+	}
+  
+}, 1000 * 60)  //Check every minute
 
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id
   if (msg.text == 'Send me the CSV') {
-    bot.sendMessage(chatId, "That's the CSV:")
-    bot.sendDocument(users[i], `./CSV/${fileName(chatId)}`)
-    console.log(`File CSV sent to ${String(chatId)}`)
+    bot.sendMessage(chatId, "That's your CSV:")
+    bot.sendDocument(chatId, `./CSV/${fileName(chatId)}`)
+    console.log(`File CSV sent to ${chatId}`)
   }
 })
