@@ -22,7 +22,7 @@ function loadDB() {
   lineReader.eachLine('registered_users.data', function(line) {
     users.push(Number(line))
   })
-  console.log('\nDatabase loaded!')
+  console.log('Database loaded!')
 }
 
 function saveDB() {
@@ -35,7 +35,7 @@ function saveDB() {
       if (err) console.log(err)
     })
   })
-  console.log('Database saved!\n')
+  console.log('Database saved!')
 }
 
 
@@ -94,10 +94,10 @@ bot.onText(/\/register/, (msg) => {
 
 bot.onText(/\/unregister/, (msg) => {
   const chatId = msg.chat.id
-  if (chatId in users) {
+  if (users.includes(chatId)) {
     for (var i = 0; i < users.length; i++) {
       if (users[i] === chatId) {
-        users.splice(i)
+        users.splice(i, 1)
         break
       }
     }
