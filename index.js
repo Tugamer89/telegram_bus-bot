@@ -58,6 +58,28 @@ function write_(file_Name, data) {
 }
 
 
+function remove(file_name, del) {
+	let data = fs.readFileSync(file_name, 'utf-8').split(/\r\n|\r|\n/)
+
+	
+	if (del > data.length - 2 || data.length < 3) {
+		return `${data.length}`
+	}
+
+	let real = []
+	
+	for (let i = 0; i < data.length - 1; i++) {
+		if (del == i || (del == -1 && i == data.length - 2)) {
+			continue
+		}
+		real.push(data[i])
+	}
+
+  fs.writeFileSync(file_name, real.join('\n')+'\n')
+	return `-1`
+}
+
+
 
 bot.onText(/\/start/, (msg) => {
 	const chatId = msg.chat.id
@@ -78,6 +100,8 @@ bot.onText(/\/help/, (msg) => {
 -> /add [weekday] [day] [month] [year] [hh:mm] [code] [number]          manually add a bus - weekday in letters, day in numbers, year in numbers, code 4 digits, number 1-999
 
 -> [code] [number]          automatically add a bus - code 4 digits, number 1-999
+
+-> /remove [line]          remove a line from the database - default the last one
 
 -> Send me the CSV          send the database in the CSV format`)
 })
@@ -287,4 +311,47 @@ bot.on('message', (msg) => {
     bot.sendDocument(chatId, `./CSV/${fileName(chatId)}`)
     console.log(`File CSV sent to ${chatId}`)
   }
+})
+
+
+bot.onText(/\/remove/, (msg, match) => {
+	const chatId = msg.chat.id 
+
+	let line = match['input'].split(' ')[1]
+
+	pablo = true
+	if (typeof line === 'undefined') {
+		line = -1
+		pablo = false
+	}
+	try {
+		if (isNaN(line) || (line < 1 && pablo)) {
+			bot.sendMessage(chatId, `The line ${line} is not valid`)
+		}
+			
+		else {
+			good = remove(`./CSV/${fileName(chatId)}`, line)
+	
+			if (line == -1) {
+				line = 'Last line'
+			} 
+			else {
+				line = `Line ${line}`
+			}
+			
+			if (good == '-1') {
+				console.log(`${chatId} deleted ${line}`)
+				bot.sendMessage(chatId, `${line} deleted successfully!`)
+			} 
+			else if (good < 3){
+				bot.sendMessage(chatId, `Your database is empty`)
+			}
+			else {
+				bot.sendMessage(chatId, `${line} is not between 1 and ${good-2}`)
+			}
+		} 
+		
+	} catch (err) {
+		bot.sendMessage(chatId, `Your database is empty`)
+	}
 })
