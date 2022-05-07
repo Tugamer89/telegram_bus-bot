@@ -1,10 +1,16 @@
+//	IMPORTING
+
 const TelegramBot = require('node-telegram-bot-api')
 const fs = require('fs')
 const path = require('path');
 const json2csv = require('json2csv').parse;
 const lineReader = require('line-reader');
+const axios = require("axios")
 const token = process.env.TOKEN
 const bot = new TelegramBot(token, { polling: true })
+
+
+//	INIZIALIZATION
 
 let users = []
 let clock = []
@@ -13,6 +19,8 @@ const months = ["January" ,"February", "March", "April", "May", "June", "July", 
 
 loadDB()
 
+
+//	FUNCTIONS
 
 function fileName(userId) {
 	return `data-${userId}.csv`
@@ -52,7 +60,7 @@ function write_(file_Name, data) {
 	} else {
 		rows = json2csv(data, { header: false })
 	}
-	
+
 	fs.appendFileSync(filename, rows)
 	fs.appendFileSync(filename, "\r\n")
 }
@@ -61,13 +69,13 @@ function write_(file_Name, data) {
 function remove(file_name, del) {
 	let data = fs.readFileSync(file_name, 'utf-8').split(/\r\n|\r|\n/)
 
-	
+
 	if (del > data.length - 2 || data.length < 3) {
 		return `${data.length}`
 	}
 
 	let real = []
-	
+
 	for (let i = 0; i < data.length - 1; i++) {
 		if (del == i || (del == -1 && i == data.length - 2)) {
 			continue
@@ -80,6 +88,7 @@ function remove(file_name, del) {
 }
 
 
+//	BOT FUNCTIONS
 
 bot.onText(/\/start/, (msg) => {
 	const chatId = msg.chat.id
@@ -109,16 +118,16 @@ bot.onText(/\/help/, (msg) => {
 
 bot.onText(/\/register/, (msg, match) => {
   const chatId = msg.chat.id
-	
+
   if (users.includes(chatId)) {
     bot.sendMessage(chatId, 'You cannot register twice or more!')
   } else {
 		let time = match['input'].split(' ')[1]
-		
+
 		if (typeof time === 'undefined') {
 			time = `23:00`
 		}
-		
+
 		if (!/^(2[0-3]|[0-1]?[0-9]):([0-5]?[0-9])$/.test(time)) {
 			bot.sendMessage(chatId, `The time ${time} is not valid`)
 		}
@@ -126,16 +135,16 @@ bot.onText(/\/register/, (msg, match) => {
 			let times = time.split(':')
 			let hours = times[0]
 			let minutes = times[1]
-	
+
 			if (/^[0-9]$/.test(hours)) {
 				hours = `0${hours}`
 			}
 			if (/^[0-9]$/.test(minutes)) {
 				minutes = `0${minutes}`
 			}
-	
+
 			time = `${hours}:${minutes}`
-			
+
 			users.push(chatId)
 			clock.push(time)
 			console.log(`User ${chatId} registered with ${time}`)
@@ -167,12 +176,12 @@ bot.onText(/\/unregister/, (msg) => {
 
 bot.onText(/\/add/, (msg, match) => {
 	const chatId = msg.chat.id
-	
+
 	let ts = Date.now()
   let date_ob = new Date(ts)
-	
+
 	date = match['input'].split(' ')
-	
+
 	let weekday = date[1]
 	let day = date[2]
 	let month = date[3]
@@ -180,8 +189,8 @@ bot.onText(/\/add/, (msg, match) => {
 	let time = date[5]
 	let code = date[6]
 	let number = date[7]
-	
-	
+
+
 	//checks of data in order: weekday - month - year - day - time (minutes & hours) - code - number
 
 	if (date.length < 8) {	//check if all fields are tehre
@@ -208,7 +217,7 @@ bot.onText(/\/add/, (msg, match) => {
 	else if (!/^[1-9][0-9]{0,2}$/.test(number)) {	//check if the 'bus' number is valid
 		bot.sendMessage(chatId, `The number of the bus ${number} is not between 1 and 999`)
 	}
-	
+
 	else {		//everything is ok so I can go!
 		let times = time.split(':')
 		let hours = times[0]
@@ -225,7 +234,7 @@ bot.onText(/\/add/, (msg, match) => {
 		}
 
 		time = `${hours}:${minutes}`
-		
+
 		let data = [{
 	    'Weekday': String(weekday),
 	    'Day': String(day),
@@ -235,7 +244,7 @@ bot.onText(/\/add/, (msg, match) => {
 	    'Code': String(code),
 	    'Number': String(number)
 	  }]
-		
+
 	  write_(fileName(chatId), data)
 		bot.sendMessage(chatId, `Manually added ${match} at ${weekday} ${day} ${month} ${year} ${time}`)
 		console.log(`Manually added ${match} at ${weekday} ${day} ${month} ${year} ${time}`)
@@ -245,7 +254,7 @@ bot.onText(/\/add/, (msg, match) => {
 
 bot.onText(/^[0-9]{4}\ [1-9][0-9]{0,2}$/, (msg, match) => {		//4 numbers and a space and a number between 1 and 999 and then end here
   const chatId = msg.chat.id
-	
+
   let ts = Date.now()
   let date_ob = new Date(ts)
   let minutes = date_ob.getMinutes()
@@ -300,7 +309,7 @@ setInterval(function () {
 			console.log(`Newsletter sent to ${users[j]}`)
 		}
 	}
-  
+
 }, 1000 * 60)  //Check every minute
 
 
@@ -315,7 +324,7 @@ bot.on('message', (msg) => {
 
 
 bot.onText(/\/remove/, (msg, match) => {
-	const chatId = msg.chat.id 
+	const chatId = msg.chat.id
 
 	let line = match['input'].split(' ')[1]
 
@@ -328,30 +337,51 @@ bot.onText(/\/remove/, (msg, match) => {
 		if (isNaN(line) || (line < 1 && pablo)) {
 			bot.sendMessage(chatId, `The line ${line} is not valid`)
 		}
-			
+
 		else {
 			good = remove(`./CSV/${fileName(chatId)}`, line)
-	
+
 			if (line == -1) {
 				line = 'Last line'
-			} 
+			}
 			else {
 				line = `Line ${line}`
 			}
-			
+
 			if (good == '-1') {
 				console.log(`${chatId} deleted ${line}`)
 				bot.sendMessage(chatId, `${line} deleted successfully!`)
-			} 
+			}
 			else if (good < 3){
 				bot.sendMessage(chatId, `Your database is empty`)
 			}
 			else {
 				bot.sendMessage(chatId, `${line} is not between 1 and ${good-2}`)
 			}
-		} 
-		
+		}
+
 	} catch (err) {
 		bot.sendMessage(chatId, `Your database is empty`)
 	}
 })
+
+
+
+//	AUTO-UPDATE
+
+setInterval(function() {
+	let this_data = fs.readFileSync(path.basename(__filename), 'utf-8')
+	
+	axios
+		.get('https://raw.githubusercontent.com/Tugamer89/telegram_bus-bot/main/index.js')
+    .then(res => {
+      let new_data = res.data
+
+      if (this_data != new_data) {
+    		console.log('Updated!')
+    		fs.writeFileSync(path.basename(__filename), new_data)
+    	}
+    })
+    .catch(error => {console.log(error)});
+
+}, 1000 * 60 * 60)  //Check every 1 hour

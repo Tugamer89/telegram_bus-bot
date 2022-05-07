@@ -19,14 +19,17 @@ Feel free to contact me for more suggestions or if you find a bug!
     - Remove admins
   - Add buttons
   - Improve the reading and writing of files
-  - Auto update
   - Use the time zone of the user
   
 <br>
 
 ## **Changelog:**
 
-## **Version 1.0.0**
+## **Version 1.0.1**
+  - Added auto-update
+	  - To let it work properly run the server with `nodemon`
+
+### **Version 1.0.0**
   - Added the registration to the daily newsletter at a specific time
   - Added the unregistration to the newsletter
   - Added the saving of a bus at a manually set date and time

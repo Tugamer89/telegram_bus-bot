@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.27.2",
     "json2csv": "^5.0.7",
     "line-reader": "^0.4.0",
-    "node-telegram-bot-api": "^0.57.0"
+    "node-telegram-bot-api": "^0.57.0",
+    "nodemon": "^2.0.16"
   }
 }
