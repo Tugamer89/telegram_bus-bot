@@ -88,11 +88,10 @@ function remove(file_name, del) {
 }
 
 
-//	BOT FUNCTIONS
-
+//	BOT COMMANDS
 bot.onText(/\/start/, (msg) => {
 	const chatId = msg.chat.id
-	bot.sendMessage(chatId, `Hi ${msg.from.username}, this bot allows you to save the bus number and code with date and time in a CSV database and to be able to download it \n/help for help`)
+	bot.sendMessage(chatId, `Hi ${msg.from.username}, this bot allows you to save the bus number and code with date and time in a CSV database and to be able to download it! \n/help for help`)
 })
 
 bot.onText(/\/help/, (msg) => {
