@@ -516,7 +516,7 @@ bot.onText(/\/send/, (msg, match) => {
 
 
 //	AUTO-UPDATE
-/*
+
 setInterval(function() {
 	let this_data = fs.readFileSync(path.basename(__filename), 'utf-8')
 	
@@ -532,5 +532,5 @@ setInterval(function() {
     })
     .catch(error => {console.log(error)});
 
-}, 1000 * 60 * 60)  //Check every 1 hour
-*/
+}, 1000 * 60 * 30)  //Check every 30 minutes
+
