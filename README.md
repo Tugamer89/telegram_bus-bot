@@ -9,14 +9,12 @@ Feel free to contact me for more suggestions or if you find a bug!
 
 ## **Known bugs:**
   - Hours are not stored properly (24:xx, 26:xx)
+  - Don't checks if userIds and message are correct in `/send`
+  - The code is shit!
 
 <br>
 
 ## **Future implementations:**
-  - List of admins who can:
-	  - Send messages to everybody 
-	  - Add more admins
-    - Remove admins
   - Add buttons
   - Improve the reading and writing of files
   - Use the time zone of the user
@@ -25,7 +23,17 @@ Feel free to contact me for more suggestions or if you find a bug!
 
 ## **Changelog:**
 
-## **Version 1.0.1**
+## **Version 1.0.2**
+  - Added the auto-registration of users
+  - Added list of admins who can:
+	  - Send messages to everyone or only someone
+	  - Add more admins
+    - Remove admins
+    - List all admins
+    - List all users
+ 
+
+### **Version 1.0.1**
   - Added auto-update
 	  - To let it work properly run the server with `nodemon`
 
@@ -64,7 +72,20 @@ Feel free to contact me for more suggestions or if you find a bug!
   - `/remove [line]` to remove a line from the database, if you don't specify it's the last one
 	  - The line must be between 1 and the last one of the specific database
     - Example: `/remove 21`
-  - `Send me the CSV` to send the database in the CSV format 
+  - `Send me the CSV` to send the database in the CSV format
+
+  ### Only for admins:
+  - `/admin_add [user_id]` to add another admin from user_id
+    - Example: `/admin_add 1234567890` 
+  - `/admin_remove [user_id]` to remove an admin from user_id
+    - Example: `/admin_remove 1234567890`
+  - `/admin_list` to list all admins
+  - `/user_list` to list all users
+  - `/send [user_ids] {[message]}` to send a message to the specified users
+	  - It supports sending messages to everyone: `all`
+    - The users must be separated by `-` 
+    - Example: `/send 1234567890-123456791 {this is a message}` 
+	
 
 
  

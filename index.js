@@ -14,6 +14,8 @@ const bot = new TelegramBot(token, { polling: true })
 
 let users = []
 let clock = []
+let admins = []
+let start = []
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 const months = ["January" ,"February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -29,10 +31,18 @@ function fileName(userId) {
 function loadDB() {
   users = []
 	clock = []
+	admins = []
+	start = []
   lineReader.eachLine('registered_users.data', function(line) {
 		line = line.split('-')
     users.push(Number(line[0]))
 		clock.push(line[1])
+  })
+	lineReader.eachLine('admins.data', function(line) {
+    admins.push(Number(line))
+  })
+	lineReader.eachLine('users.data', function(line) {
+    start.push(Number(line))
   })
   console.log('Database loaded!')
 }
@@ -41,9 +51,27 @@ function saveDB() {
   fs.writeFile('registered_users.data', '', function(err) { //to reset the file
     if (err) console.log(err)
   })
+	fs.writeFile('admins.data', '', function(err) { //to reset the file
+    if (err) console.log(err)
+  })
+	fs.writeFile('users.data', '', function(err) { //to reset the file
+    if (err) console.log(err)
+  })
 
 	for (let i = 0; i < users.length; i++) {	//to actually write the file
 		fs.appendFile('registered_users.data', `${users[i]}-${clock[i]}\n`, function(err) {
+			if (err) console.log(err)
+		})
+	}
+
+	for (let i = 0; i < admins.length; i++) {	//to actually write the file
+		fs.appendFile('admins.data', `${admins[i]}\n`, function(err) {
+			if (err) console.log(err)
+		})
+	}
+
+	for (let i = 0; i < start.length; i++) {	//to actually write the file
+		fs.appendFile('users.data', `${start[i]}\n`, function(err) {
 			if (err) console.log(err)
 		})
 	}
@@ -92,12 +120,18 @@ function remove(file_name, del) {
 bot.onText(/\/start/, (msg) => {
 	const chatId = msg.chat.id
 	bot.sendMessage(chatId, `Hi ${msg.from.username}, this bot allows you to save the bus number and code with date and time in a CSV database and to be able to download it! \n/help for help`)
+
+	if (!start.includes(chatId)) {
+		start.push(chatId)
+		saveDB()
+	}
 })
 
 bot.onText(/\/help/, (msg) => {
 	const chatId = msg.chat.id
 	bot.sendMessage(chatId, `This is the help command!
 
+-> /start          start the bot
 
 -> /help          this message
 
@@ -112,6 +146,21 @@ bot.onText(/\/help/, (msg) => {
 -> /remove [line]          remove a line from the database - default the last one
 
 -> Send me the CSV          send the database in the CSV format`)
+
+	if (admins.includes(chatId)) {
+		bot.sendMessage(chatId, `
+
+-> /admin_add [user_id]          add an admin with user id
+
+-> /admin_remove [user_id]          remove an admin from user id
+
+-> /admin_list          list all admins
+
+-> /user_list          list all users
+
+-> /send [user_ids] {[message]}          send the message to the selected users
+`)
+	}
 })
 
 
@@ -366,8 +415,108 @@ bot.onText(/\/remove/, (msg, match) => {
 
 
 
-//	AUTO-UPDATE
+//	ADMIN COMMANDS	
 
+bot.onText(/\/admin_add/, (msg, match) => {
+	const chatId = msg.chat.id
+	
+	let id = match['input'].split(' ')[1]
+
+	if (admins.includes(chatId)) {
+		if (! /^[0-9]{10}$/.test(id)) {
+			bot.sendMessage(chatId, `The id must be 10 digits long!`)
+		}
+		else if (admins.includes(id)) {
+			bot.sendMessage(chatId, `The user ${id} is already an admin`)
+		}
+		else {
+			admins.push(id)
+			bot.sendMessage(chatId, `The user ${id} just became an admin`)
+			console.log(`${chatId} added ${id} as admin`)
+			saveDB()
+		}
+	}
+})
+
+
+bot.onText(/\/admin_remove/, (msg, match) => {
+	const chatId = msg.chat.id
+	
+	let id = match['input'].split(' ')[1]
+
+	if (admins.includes(chatId)) {
+		if (! /^[0-9]{10}$/.test(id)) {
+			bot.sendMessage(chatId, `The id must be 10 digits long!`)
+		}
+		else if (admins.includes(Number(id))) {
+			for (var i = 0; i < admins.length; i++) {
+	      if (admins[i] == id) {
+	        admins.splice(i, 1)
+	        break
+	      }
+	    }
+			
+			bot.sendMessage(chatId, `The user ${id} has just been removed by admins`)
+			console.log(`${chatId} removed ${id} from admin`)
+			saveDB()
+		}
+		else {
+			bot.sendMessage(chatId, `The user ${id} is not an admin`)
+		}
+	}
+})
+
+
+bot.onText(/\/admin_list/, (msg) => {
+	const chatId = msg.chat.id
+	
+	if (admins.includes(chatId)) {
+		bot.sendMessage(chatId, `List of admins: ${admins.join(', ')}`)
+	}
+})
+
+
+bot.onText(/\/user_list/, (msg) => {
+	const chatId = msg.chat.id
+	
+	if (admins.includes(chatId)) {
+		bot.sendMessage(chatId, `List of users: ${start.join(', ')}`)
+	}
+})
+
+
+bot.onText(/\/send/, (msg, match) => {
+	const chatId = msg.chat.id
+
+	if (admins.includes(chatId)) {
+		let who = match['input'].split(' ')[1].split('-')
+		let message = match['input'].split('{')[1].split('}')[0]
+
+		if (who[0] == 'all') {
+			for (let i = 0; i < start.length; i++) {
+				who[i] = start[i]
+			}
+		}
+		
+		for (let i = 0; i < who.length; i++) {
+			if (/^[0-9]{10}$/.test(who[i])) {
+				bot.sendMessage(who[i], `An admin just sent you a message: ${message}`)
+				bot.sendMessage(chatId, `Just sent the message to ${who[i]}`)
+			}
+			else {
+				bot.sendMessage(chatId, `Message not sent to ${who[i]}`)
+			}
+		}
+
+		console.log(`The admin ${chatId} sent the message {${message}} to ${who}`)
+	}
+})
+
+
+
+
+//	AUTO-UPDATE
+/*
 setInterval(function() {
 	let this_data = fs.readFileSync(path.basename(__filename), 'utf-8')
 	
@@ -384,3 +533,4 @@ setInterval(function() {
     .catch(error => {console.log(error)});
 
 }, 1000 * 60 * 60)  //Check every 1 hour
+*/
