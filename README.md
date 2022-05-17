@@ -3,6 +3,8 @@ That's a very basic telegram bot made by me
 
 this bot was created to register buses by storing the code, number, date and time and allows you to download the database in CSV format
 
+At the first use delte everything inside users.data, registered_users.data and admins.data for work properly
+
 Feel free to contact me for more suggestions or if you find a bug!
 
 <br>
@@ -10,6 +12,7 @@ Feel free to contact me for more suggestions or if you find a bug!
 ## **Known bugs:**
   - Hours are not stored properly (24:xx, 26:xx)
   - Don't checks if userIds and message are correct in `/send`
+  - I don't know but I think `/remove` doesn't work properly with defined line
   - The code is shit!
 
 <br>
@@ -23,7 +26,17 @@ Feel free to contact me for more suggestions or if you find a bug!
 
 ## **Changelog:**
 
-## **Version 1.0.2**
+## **Version 1.0.3**
+  - Improved sending of messages
+	  - Now the message does not go in {}
+		- Now it checks for errors
+  - Improved code
+  - Added comments to almost everything
+  - Improved README.md
+  - Reduced check for auto-update time
+  - Increased precision of newsletter
+
+### **Version 1.0.2**
   - Added the auto-registration of users
   - Added list of admins who can:
 	  - Send messages to everyone or only someone
@@ -37,15 +50,6 @@ Feel free to contact me for more suggestions or if you find a bug!
   - Added auto-update
 	  - To let it work properly run the server with `nodemon`
 
-### **Version 1.0.0**
-  - Added the registration to the daily newsletter at a specific time
-  - Added the unregistration to the newsletter
-  - Added the saving of a bus at a manually set date and time
-  - Added the saving of a bus at an automatically set date and time
-  - Added the removing of the last bus or one manually chosen
-  - Added the sending of the database in CSV format
-  - Optimized and improved some code
-  - Fixed some minor bugs
 
 <br>
 
@@ -81,10 +85,10 @@ Feel free to contact me for more suggestions or if you find a bug!
     - Example: `/admin_remove 1234567890`
   - `/admin_list` to list all admins
   - `/user_list` to list all users
-  - `/send [user_ids] {[message]}` to send a message to the specified users
+  - `/send [user_ids] [message]` to send a message to the specified users
 	  - It supports sending messages to everyone: `all`
     - The users must be separated by `-` 
-    - Example: `/send 1234567890-123456791 {this is a message}` 
+    - Example: `/send 1234567890-123456791 this is a message` 
 	
 
 
