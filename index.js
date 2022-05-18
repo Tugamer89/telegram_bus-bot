@@ -434,7 +434,7 @@ setInterval(function () {		//newsletter
 		}
 	}
 
-}, 1000 * 15)  //Check every 15 seconds
+}, 1000 * 30)  //Check every 30 seconds
 
 
 bot.on('message', (msg) => {
