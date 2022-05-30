@@ -11,8 +11,6 @@ Feel free to contact me for more suggestions or if you find a bug!
 
 ## **Known bugs:**
   - Hours are not stored properly (24:xx, 26:xx)
-  - Don't checks if userIds and message are correct in `/send`
-  - I don't know but I think `/remove` doesn't work properly with defined line
   - The code is shit!
 
 <br>
@@ -26,7 +24,14 @@ Feel free to contact me for more suggestions or if you find a bug!
 
 ## **Changelog:**
 
-## **Version 1.0.3**
+## **Version 1.0.4**
+  - Fixed `/remove` command
+  - Improved `/send`:
+	  - Now it controls for userId and message
+  - Fixed newsletter
+  - Improved newsletter sending time
+
+### **Version 1.0.3**
   - Improved sending of messages
 	  - Now the message does not go in {}
 		- Now it checks for errors

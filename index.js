@@ -16,6 +16,7 @@ let users = []		//list of registered users
 let clock = []		//list of the registered users newsletter's time
 let admins = []		//list of admins
 let start = []		//list of all users of the bot
+let sended = []		//list of sended newsletters
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 const months = ["January" ,"February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -35,6 +36,7 @@ function loadDB() {	//load the database
 	clock = []
 	admins = []
 	start = []
+	sended = []
 
 	//save registered users and their newsletter's time reading line by line the file
   lineReader.eachLine('registered_users.data', function(line) {
@@ -53,6 +55,10 @@ function loadDB() {	//load the database
     start.push(Number(line))
   })
 
+	//full sended with false
+	for (let i = 0; i < users.length; i++) {
+		sended[i] = false
+	}
 	
   console.log('Database loaded!')
 }
@@ -122,7 +128,7 @@ function remove(file_name, del) {		//remove the line
 
 	let real = []		//new data
 
-	//delte the selcted line
+	//delete the selcted line
 	for (let i = 0; i < data.length - 1; i++) {
 		if (del == i || (del == -1 && i == data.length - 2)) {
 			continue
@@ -163,7 +169,7 @@ bot.onText(/\/help/, (msg) => {		//	/help
 
 -> [code] [number]          automatically add a bus - code 4 digits, number 1-999
 
--> /remove [line]          remove a line from the database - default the last one
+-> /remove [line]          remove a line from the database - default is the last one
 
 -> Send me the CSV          send the database in the CSV format`)
 
@@ -420,21 +426,29 @@ setInterval(function () {		//newsletter
   let date_ob = new Date(ts)					//date of now
   let hours = date_ob.getHours()+2		//hours of now - +2 for CET -> tofix
   let minutes = date_ob.getMinutes()	//minutes of now
+	let seconds = date_ob.getSeconds()	//seconds of now
 
+	if (hours == 00 && minutes == 00 && seconds == 00) {
+		for (let i = 0; i < sended.length; i++) {
+			sended[i] = false
+		}
+	}
+	
 	for (let j = 0; j < clock.length; j++) {
 		let time = clock[j].split(':')
 		let prv_hours = time[0]
 		let prv_minutes = time[1]
 
-		//checks if it's the corerct time
-		if (hours == prv_hours && minutes == prv_minutes) {
+		//checks if it's the corerct time and it is not already sended
+		if ((! sended[j]) && hours == prv_hours && minutes == prv_minutes) {
+			sended[j] = true
 			bot.sendMessage(users[j], "That's your CSV:")
 			bot.sendDocument(users[j], `./CSV/${fileName(users[j])}`)
 			console.log(`Newsletter sent to ${users[j]}`)
 		}
 	}
 
-}, 1000 * 60)  //Check every 60 seconds
+}, 1000)  //Checks every second
 
 
 bot.on('message', (msg) => {
@@ -610,13 +624,13 @@ bot.onText(/\/send/, (msg, match) => {		// /send
 		return
 	}
 
-	//delete non numeric user_ids 
+	//delete non numeric & not started user_ids 
 	for (let  i = 0; i < who.length; i++) {
 		if (isNaN(who[i]) && who[i] != 'all') {
 			who.splice(who[i], 1)
 		}
 	}
-
+	
 	//checks if there is at least one recipient left
 	if (who.length <= 0) {
 		bot.sendMessage(chatId, `You must specify at least one valid recipient!`)
@@ -624,7 +638,7 @@ bot.onText(/\/send/, (msg, match) => {		// /send
 	}
 	
 
-	//all functionality
+	//'all' functionality
 	if (who[0] == 'all') {
 		for (let i = 0; i < start.length; i++) {
 			who[i] = start[i]
@@ -685,7 +699,7 @@ bot.onText(/\/send/, (msg, match) => {		// /send
 
 
 //	AUTO-UPDATE
-
+/*
 setInterval(function() {
 	let this_data = fs.readFileSync(path.basename(__filename), 'utf-8')	//data of this file
 	
@@ -704,4 +718,4 @@ setInterval(function() {
     .catch(error => {console.log(error)});
 
 }, 1000 * 60 * 15)  //Check every 15 minutes
-
+*/
